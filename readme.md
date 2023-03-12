@@ -6,7 +6,7 @@ Implementation of Noesis GUI for cryengine.
 
 ### Prerequisites
 
-1. [Requires the stage api in my cryengine for on the StageApiRework Branch.](https://github.com/sunnlok/CRYENGINE/tree/StageApiRework)
+1. [Requires the stage api in Sunnlok cryengine for on the StageApiRework Branch.](https://github.com/sunnlok/CRYENGINE/tree/StageApiRework)
 
 2. Add Shader folder into your Asset directory
 
