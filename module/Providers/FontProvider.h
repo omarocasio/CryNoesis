@@ -6,6 +6,7 @@
 #pragma once
 #include <NsGui/CachedFontProvider.h>
 
+#include <CryFlowGraph/IFlowBaseNode.h>
 
 class CFontProvider final : public Noesis::CachedFontProvider
 {

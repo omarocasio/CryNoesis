@@ -10,6 +10,8 @@
 
 #include <variant>
 #include <array>
+#include <any>
+
 namespace LayoutDefinitions
 {
 	using namespace Cry::Renderer::Pipeline;
@@ -18,12 +20,15 @@ namespace LayoutDefinitions
 
 	enum class In : uint64
 	{
-		Pos = 0,
-		Color,
-		Tex0,
-		Tex1,
-		Tex2,
-		Coverage,
+		Pos = 0, // linear Position(xy)
+		Color, // nointerpolation sRBG Color (rgba)
+		Tex0, // linear TexCoord0 (uv)
+		Tex1, // linear TexCoord1 (uv)
+		Coverage, // linear Coverage(alpha)
+		Rect, // nointerpolation Rect(x0, y0, x1, y1)
+		Tile, // nointerpolation Rect(x, y , width , height )
+		ImagePos, // linear Position (xy) - Scale(zw)
+
 		Count
 	};
 
@@ -33,11 +38,13 @@ namespace LayoutDefinitions
 		{ "COLOR", 0, EInputElementFormat::R8G8B8A8_UNORM, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, EInputElementFormat::FORMAT_R32G32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 1, EInputElementFormat::FORMAT_R32G32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 2, EInputElementFormat::R16G16B16A16_UNORM, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 3, EInputElementFormat::R32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 }
+		{ "COVERAGE", 0, EInputElementFormat::R16G16B16A16_UNORM, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
+		{ "RECT", 0, EInputElementFormat::FORMAT_R32G32B32A32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
+		{ "TILE", 0, EInputElementFormat::FORMAT_R32G32B32A32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 },
+		{ "IMAGE_POSITION", 0, EInputElementFormat::FORMAT_R32G32_FLOAT, 0, APPEND_ALIGNED_ELEMENT, EInputSlotClassification::PER_VERTEX_DATA, 0 }
 	};
 
-	template<uint64_t size>
+	template<size_t size>
 	using TDescrArray = std::array<SInputElementDescription, size>;
 
 	using TDescVar = std::variant<TDescrArray<1>, TDescrArray<2>, TDescrArray<3>, TDescrArray<4>>;
@@ -50,7 +57,7 @@ namespace LayoutDefinitions
 		template<typename ...Args>
 		constexpr TDesc(Args... elements)
 		{
-			std::size_t i = 0;
+			size_t i = 0;
 			(void(descArray[i++] = gElementDescriptions[(uint64)elements]), ...);
 		}
 	};
@@ -72,15 +79,17 @@ namespace LayoutDefinitions
 	{
 		Rgba = (uint64)Extra::Count,
 		Mask,
+		Clear,
 		Path,
 		Path_AA,
 		SDF,
 		SDF_LCD,
-		Image_Opacity,
-		Image_Shadow_V,
-		Image_Shadow_H,
-		Image_Blur_V,
-		Image_Blur_H,
+		Opacity,
+		Upsample,
+		Downsameple,
+		Shadow,
+		Blur,
+
 		Count
 	};
 
@@ -90,14 +99,12 @@ namespace LayoutDefinitions
 		Linear,
 		Radial,
 		Pattern,
-		Count
-	};
+		Pattern_Clamp,
+		Pattern_Repeat,
+		Pattern_MirrorU,
+		Pattern_MirrorV,
+		Pattern_Mirror,
 
-	enum class Gauss : uint64
-	{
-		Gauss_35_Tap = (uint64)Paint::Count,
-		Gauss_63_Tap,
-		Gauss_127_Tap,
 		Count
 	};
 
@@ -106,7 +113,6 @@ namespace LayoutDefinitions
 		"Color",
 		"Tex0",
 		"Tex1",
-		"Tex2",
 		"Coverage",
 		"ST1",
 		"Rgba",
@@ -115,18 +121,11 @@ namespace LayoutDefinitions
 		"Path_AA",
 		"SDF",
 		"SDF_LCD",
-		"Image_Opacity",
-		"Image_Shadow_V",
-		"Image_Shadow_H",
-		"Image_Blur_V",
-		"Image_Blur_H",
-		"Solid",
-		"Linear",
-		"Radial",
-		"Pattern",
-		"Gauss_35_Tap",
-		"Gauss_63_Tap",
-		"Gauss_127_Tap"
+		"Opacity",
+		"Upsample",
+		"Downsample",
+		"Shadow",
+		"Blur"
 	};
 
 	template<class TBit>
@@ -136,107 +135,66 @@ namespace LayoutDefinitions
 	}
 
 	constexpr std::array<uint64, Noesis::Shader::Count> gShaderMasks = {
+		// Path
 		ToMask(Effect::Rgba),ToMask(Effect::Mask),
-		//Path_Solid
 		ToMask(Effect::Path) | ToMask(Paint::Solid),
-		//Path_Linear
 		ToMask(Effect::Path) | ToMask(Paint::Linear),
-		//Path_Radial
 		ToMask(Effect::Path) | ToMask(Paint::Radial),
-		//Path_Pattern 
 		ToMask(Effect::Path) | ToMask(Paint::Pattern),
-		//PathAA_Solid 
+		ToMask(Effect::Path) | ToMask(Paint::Pattern_Clamp),
+		ToMask(Effect::Path) | ToMask(Paint::Pattern_Repeat),
+		ToMask(Effect::Path) | ToMask(Paint::Pattern_Mirror),
+		ToMask(Effect::Path) | ToMask(Paint::Pattern_MirrorU),
+		ToMask(Effect::Path) | ToMask(Paint::Pattern_MirrorV),
+		//PathAA
 		ToMask(Effect::Path_AA) | ToMask(Paint::Solid),
-		//PathAA_Linear 
 		ToMask(Effect::Path_AA) | ToMask(Paint::Linear),
-		//PathAA_Radial
 		ToMask(Effect::Path_AA) | ToMask(Paint::Radial),
-		//PathAA_Pattern 
 		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern),
-		//SDF_Solid 
+		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern_Clamp),
+		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern_Repeat),
+		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern_Mirror),
+		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern_MirrorU),
+		ToMask(Effect::Path_AA) | ToMask(Paint::Pattern_MirrorV),
+
+		//SDF
 		ToMask(Effect::SDF) | ToMask(Paint::Solid) | ToMask(Extra::ST1),
-		//SDF_Linear
 		ToMask(Effect::SDF) | ToMask(Paint::Linear) | ToMask(Extra::ST1),
-		//SDF_Radial
 		ToMask(Effect::SDF) | ToMask(Paint::Radial) | ToMask(Extra::ST1),
-		//SDF_Pattern
 		ToMask(Effect::SDF) | ToMask(Paint::Pattern) | ToMask(Extra::ST1),
-		//SDF_LCD_Solid
+		ToMask(Effect::SDF) | ToMask(Paint::Pattern_Clamp) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF) | ToMask(Paint::Pattern_Repeat) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF) | ToMask(Paint::Pattern_Mirror) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF) | ToMask(Paint::Pattern_MirrorU) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF) | ToMask(Paint::Pattern_MirrorV) | ToMask(Extra::ST1),
+
+		//SDF_LCD
 		ToMask(Effect::SDF_LCD) | ToMask(Paint::Solid) | ToMask(Extra::ST1),
-		//SDF_LCD_Linear
 		ToMask(Effect::SDF_LCD) | ToMask(Paint::Linear) | ToMask(Extra::ST1),
-		//SDF_LCD_Radial 
 		ToMask(Effect::SDF_LCD) | ToMask(Paint::Radial) | ToMask(Extra::ST1),
-		//SDF_LCD_Pattern 
 		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern) | ToMask(Extra::ST1),
-		//Image_Opacity_Solid 
-		ToMask(Effect::Image_Opacity) | ToMask(Paint::Solid),
-		//Image_Opacity_Linear
-		ToMask(Effect::Image_Opacity) | ToMask(Paint::Linear),
-		//Image_Opacity_Radial 
-		ToMask(Effect::Image_Opacity) | ToMask(Paint::Radial),
-		//Image_Opacity_Pattern
-		ToMask(Effect::Image_Opacity) | ToMask(Paint::Pattern),
-		//Image_Shadow35V 
-		ToMask(Effect::Image_Shadow_V) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Shadow63V 
-		ToMask(Effect::Image_Shadow_V) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Shadow127V
-		ToMask(Effect::Image_Shadow_V) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Shadow35H_Solid 
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Shadow35H_Linear
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Shadow35H_Radial
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Shadow35H_Pattern
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Shadow63H_Solid
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Shadow63H_Linear
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Shadow63H_Radial 
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Shadow63H_Pattern
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Shadow127H_Solid 
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Shadow127H_Linear 
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Shadow127H_Radial 
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Shadow127H_Pattern
-		ToMask(Effect::Image_Shadow_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Blur35V 
-		ToMask(Effect::Image_Blur_V) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Blur63V 
-		ToMask(Effect::Image_Blur_V) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Blur127V
-		ToMask(Effect::Image_Blur_V) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Blur35H_Solid 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Blur35H_Linear
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Blur35H_Radial 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Blur35H_Pattern 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_35_Tap),
-		//Image_Blur63H_Solid 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Blur63H_Linear
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Blur63H_Radial 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Blur63H_Pattern 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_63_Tap),
-		//Image_Blur127H_Solid 
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Solid) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Blur127H_Linear
-		ToMask(Effect::Image_Blur_H) | ToMask(Paint::Linear) | ToMask(Gauss::Gauss_127_Tap),
-		//Image_Blur127H_Radial 
-			ToMask(Effect::Image_Blur_H) | ToMask(Paint::Radial) | ToMask(Gauss::Gauss_127_Tap),
-			//Image_Blur127H_Pattern
-			ToMask(Effect::Image_Blur_H) | ToMask(Paint::Pattern) | ToMask(Gauss::Gauss_127_Tap),
+		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern_Clamp) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern_Repeat) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern_Mirror) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern_MirrorU) | ToMask(Extra::ST1),
+		ToMask(Effect::SDF_LCD) | ToMask(Paint::Pattern_MirrorV) | ToMask(Extra::ST1),
+
+		//Opacity
+		ToMask(Effect::Opacity) | ToMask(Paint::Solid),
+		ToMask(Effect::Opacity) | ToMask(Paint::Linear),
+		ToMask(Effect::Opacity) | ToMask(Paint::Radial),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern_Clamp),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern_Repeat),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern_Mirror),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern_MirrorU),
+		ToMask(Effect::Opacity) | ToMask(Paint::Pattern_MirrorV),
+
+		ToMask(Effect::Upsample) | ToMask(Paint::Solid),
+		ToMask(Effect::Downsameple) | ToMask(Paint::Solid),
+
+		ToMask(Effect::Shadow) | ToMask(Paint::Solid),
+		ToMask(Effect::Blur) | ToMask(Paint::Solid)
 	};
 
 	template<Noesis::Shader::Enum shaderID, In... elements>
@@ -295,11 +253,17 @@ namespace LayoutDefinitions
 	constexpr TDescInfoList g_layoutInfoList = {
 		MakeInfo<Shader::RGBA, In::Pos>(),
 		MakeInfo<Shader::Mask, In::Pos>(),
+		MakeInfo<Shader::Clear, In::Pos>(),
+
 
 		MakeInfo<Shader::Path_Solid, In::Pos, In::Color>(),
 		MakeInfo<Shader::Path_Linear, In::Pos, In::Tex0>(),
 		MakeInfo<Shader::Path_Radial, In::Pos, In::Tex0>(),
 		MakeInfo<Shader::Path_Pattern, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Path_Pattern_Clamp, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Path_Pattern_Repeat, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Path_Pattern_MirrorU, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Path_Pattern_MirrorV, In::Pos, In::Tex0>(),
 
 		MakeInfo<Shader::Path_AA_Solid, In::Pos, In::Color, In::Coverage>(),
 		MakeInfo<Shader::Path_AA_Linear, In::Pos, In::Tex0, In::Coverage>(),
@@ -321,9 +285,11 @@ namespace LayoutDefinitions
 		MakeInfo<Shader::Opacity_Radial, In::Pos, In::Tex0, In::Tex1>(),
 		MakeInfo<Shader::Opacity_Pattern, In::Pos, In::Tex0, In::Tex1>(),
 
-		MakeInfo<Shader::Shadow, In::Pos, In::Color, In::Tex1, In::Tex2>(),
+		MakeInfo<Shader::Upsample, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Downsample, In::Pos, In::Tex0>(),
 
-		MakeInfo<Shader::Blur, In::Pos, In::Color, In::Tex1, In::Tex2>()
+		MakeInfo<Shader::Shadow, In::Pos, In::Color, In::Tex1, In::Tex1>(),
+		MakeInfo<Shader::Blur, In::Pos, In::Color, In::Tex1, In::Tex1>()
 	};
 }
 

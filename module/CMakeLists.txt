@@ -1,25 +1,18 @@
-if(DEDICATED_SERVER)
-	return()
-endif()
+cmake_minimum_required (VERSION 3.14)
+set(CRYENGINE_DIR "G:/CRYENGINE_Source" CACHE STRING "CRYENGINE root directory.")
+set(TOOLS_CMAKE_DIR "${CRYENGINE_DIR}/Tools/CMake")
 
-option(PLUGIN_Noesis "Enable the noesis plugin" ON)
-if (NOT PLUGIN_Noesis)
-	return()
-endif()
+set(PROJECT_BUILD 1)
+set(PROJECT_DIR "${CMAKE_SOURCE_DIR}/../")
 
+include("${TOOLS_CMAKE_DIR}/InitialSetup.cmake")
+include("${TOOLS_CMAKE_DIR}/CommonOptions.cmake")
 
-set(NS_SDK "${SDK_DIR}/Noesis" CACHE PATH "Noesis sdk path")
+add_subdirectory("${CRYENGINE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/CRYENGINE")
 
-
-#set(NS_LICENSE_NAME "" CACHE STRING "The noesis Licsense Name")
-#set(NS_LICENSE_KEY "" CACHE STRING "The noesis Licsense Key")
-
-if(NOT EXISTS ${NS_SDK})
- message("Noesis sdk path not found at: ${NS_SDK}")
- return()
-endif()
-
+include("${TOOLS_CMAKE_DIR}/Configure.cmake")
 start_sources()
+
 sources_platform(ALL)
 add_sources("Code_uber.cpp"
     PROJECTS CryNoesis
@@ -104,9 +97,129 @@ add_sources("Renderer_uber.cpp"
 		"Renderer/ViewRenderData.h"
 )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CVarOverrides.h")
+    add_sources("NoUberFile"
+        PROJECTS Game
+        SOURCE_GROUP "Root"
+            "CVarOverrides.h"
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/EngineDefineOverrides.h")
+    add_sources("NoUberFile"
+        PROJECTS Game
+        SOURCE_GROUP "Root"
+            "EngineDefineOverrides.h"
+    )
+endif()
 end_sources()
 
-CryEngineModule(CryNoesis PCH "StdAfx.cpp" SOLUTION_FOLDER "CryPlugins")
+CryGameModule(CryNoesis FORCE_SHARED PCH "StdAfx.cpp" SOLUTION_FOLDER "Project")
+
+target_include_directories(${THIS_PROJECT}
+PRIVATE
+    "${CRYENGINE_DIR}/Code/CryEngine/CryCommon"
+    "${CRYENGINE_DIR}/Code/CryEngine/CryAction"
+    "${CRYENGINE_DIR}/Code/CryEngine/CrySchematyc/Core/Interface"
+    "${CRYENGINE_DIR}/Code/CryPlugins/CryDefaultEntities/Module"
+)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "[Cc]lang")
+    target_compile_options(${THIS_PROJECT} PRIVATE
+        -Wno-unused-variable
+        -Wno-reorder
+        -Wno-unknown-pragmas
+        -Wno-parentheses
+        -Wno-switch
+        -Wno-format
+        -Wno-dynamic-class-memaccess
+        -Wno-unused-private-field
+        -Wno-unused-value
+        -Wno-invalid-offsetof
+        -Wno-multichar
+        -Wno-char-subscripts
+        -Wno-null-conversion
+        -Wno-empty-body
+        -Wno-unused-lambda-capture
+        -Wno-unused-function
+        -Wno-tautological-constant-out-of-range-compare
+    )
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(${THIS_PROJECT} PRIVATE
+        -Wno-unused-function
+        -Wno-unused-value
+        -Wno-unused-variable
+        -Wno-aligned-new
+        -Wno-int-in-bool-context
+        -Wno-invalid-offsetof
+        -Wno-comment
+        -Wno-sign-compare
+        -Wno-unused-but-set-variable
+        -Wno-maybe-uninitialized
+        -Wno-misleading-indentation
+        -Wno-unused-result
+        -Wno-unknown-pragmas
+        -Wno-multichar
+        -Wno-strict-aliasing
+        -Wno-char-subscripts
+        -Wno-conversion-null
+        -Wno-reorder
+        -Wno-parentheses
+        -Wno-format
+        -Wno-switch
+    )
+endif()
+
+
+if(OPTION_ENGINE)
+    if(NOT EXISTS "${CRYENGINE_DIR}/Code/Sandbox/EditorQt")
+        add_library(Editor STATIC "${CRYENGINE_DIR}/Code/CryEngine/CryCommon/CryCore/Platform/platform.h")
+        set_target_properties(Editor PROPERTIES LINKER_LANGUAGE CXX)
+        if (WIN32)
+            set_visual_studio_debugger_command(Editor "${CRYENGINE_DIR}/bin/win_x64/Sandbox.exe" "-project \"${PROJECT_DIR}/CryNoesis.cryproject\"")
+        endif()
+    endif()
+else()
+    add_library(GameLauncher STATIC "${CRYENGINE_DIR}/Code/CryEngine/CryCommon/CryCore/Platform/platform.h")
+    set_target_properties(GameLauncher PROPERTIES LINKER_LANGUAGE CXX)
+    if (WIN32)
+        set_visual_studio_debugger_command(GameLauncher "${CRYENGINE_DIR}/bin/win_x64/GameLauncher.exe" "-project \"${PROJECT_DIR}/CryNoesis.cryproject\"")
+    endif()
+
+    add_library(Editor STATIC "${CRYENGINE_DIR}/Code/CryEngine/CryCommon/CryCore/Platform/platform.h")
+    set_target_properties(Editor PROPERTIES LINKER_LANGUAGE CXX)
+    if (WIN32)
+        set_visual_studio_debugger_command(Editor "${CRYENGINE_DIR}/bin/win_x64/Sandbox.exe" "-project \"${PROJECT_DIR}/CryNoesis.cryproject\"")
+    endif()
+
+    add_library(GameServer STATIC "${CRYENGINE_DIR}/Code/CryEngine/CryCommon/CryCore/Platform/platform.h")
+    set_target_properties(GameServer PROPERTIES LINKER_LANGUAGE CXX)
+    if (WIN32)
+        set_visual_studio_debugger_command(GameServer "${CRYENGINE_DIR}/bin/win_x64/Game_Server.exe" "-project \"${PROJECT_DIR}/CryNoesis.cryproject\"")
+    endif()
+endif()
+
+# Set StartUp project in Visual Studio
+set_solution_startup_target(GameLauncher)
+
+if (WIN32)
+    set_visual_studio_debugger_command( ${THIS_PROJECT} "${CRYENGINE_DIR}/bin/win_x64/GameLauncher.exe" "-project \"${PROJECT_DIR}/CryNoesis.cryproject\"" )
+endif()
+
+#BEGIN-CUSTOM
+# Make any custom changes here, modifications outside of the block will be discarded on regeneration.
+
+option(PLUGIN_Noesis "Enable the noesis plugin" ON)
+if (NOT PLUGIN_Noesis)
+	return()
+endif()
+
+set(NS_SDK "${SDK_DIR}/Noesis" CACHE PATH "Noesis sdk path")
+
+if(NOT EXISTS ${NS_SDK})
+ message("Noesis sdk path not found at: ${NS_SDK}")
+ return()
+endif()
 
 target_include_directories(${THIS_PROJECT}
  PRIVATE
@@ -118,17 +231,12 @@ target_include_directories(${THIS_PROJECT}
   ../Interface
 )
 
-
 unset(${NoesisLib} CACHE)
 find_library(NoesisLib NAMES Noesis PATHS "${NS_SDK}/Lib/windows_x86_64")
 target_link_libraries(${THIS_PROJECT} PRIVATE "${NoesisLib}")
 
-#Enable cpp 17 support
-set_target_properties(${THIS_PROJECT} PROPERTIES CXX_STANDARD 17)
 #Enable edit and continue support
 target_compile_options( ${THIS_PROJECT} PRIVATE /ZI )
 
-#target_compile_definitions(${THIS_PROJECT} PRIVATE NS_LICENSE_KEY=${NS_LICENSE_KEY} NS_LICENSE_NAME=${NS_LICENSE_NAME}) 
-
 deploy_runtime_files(${NS_SDK}/Bin/windows_x86_64/Noesis.dll)
-#deploy_runtime_files(${NS_SDK}/Bin/windows_x86_64/NoesisApp.dll)
+#END-CUSTOM

@@ -7,6 +7,7 @@
 
 #include "LayoutDefinitions.h"
 #include <variant>
+#include <CryRenderer/IRenderer.h>
 #include <../RenderDll/Common/CryNameR.h>
 #include <CryCore/Containers/CryArray.h>
 #include <NsMath/Matrix.h>
@@ -60,11 +61,10 @@ static void RegisterSamplers(Cry::Renderer::IStageResourceProvider* pResourcePro
 
 static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProvider)
 {
-	//g_layoutInfoList.size()
-	for (int i = 0; i < 20; ++i)
+	for (int i = 0; i < g_layoutInfoList.size(); ++i)
 	{
-		const SShaderDescInfo& layoutInfo = g_layoutInfoList[i];
-		SShaderInfo& shaderInfo = g_shaderInfo[i];
+		const auto& layoutInfo = g_layoutInfoList[i];
+		auto& shaderInfo = g_shaderInfo[i];
 		shaderInfo.effectID = layoutInfo.shader;
 
 		std::visit([&shaderInfo, pResourceProvider](auto& descs) {
@@ -72,7 +72,7 @@ static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProv
 			}, layoutInfo.descriptions);
 		shaderInfo.mask = layoutInfo.mask;
 
-		shaderInfo.pShader = gEnv->pRenderer->EF_LoadShader("Noesis", 0, layoutInfo.mask);
+		shaderInfo.pShader = gEnv->pRenderer->EF_LoadShader("Noesis",layoutInfo.mask);
 	}
 
 }
@@ -91,6 +91,9 @@ CRenderDevice::CRenderDevice()
 	m_pResourceProvider = m_pPipeline->GetResourceProvider();
 
 	//m_pNoesisShader = gEnv->pRenderer->EF_LoadShader("Noesis", g_layoutInfoList[0].mask);
+
+	if (gEnv->IsEditor())
+		return;
 
 	m_pPipeline->ExecuteRenderThreadCommand([=]() {
 		RegisterSamplers(m_pResourceProvider);
@@ -209,22 +212,22 @@ void CRenderDevice::UpdateTexture(Noesis::Texture* texture, uint32_t level, uint
 
 void CRenderDevice::BeginOffscreenRender()
 {
-	m_pPipeline->RT_BeginPass(*m_pCurrentView->stage, m_pCurrentView->viewPass);
+	BeginActualRender();
 }
 
 void CRenderDevice::EndOffscreenRender()
 {
-	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
+	EndActualRender();
 }
 
 void CRenderDevice::BeginOnscreenRender()
 {
-	m_pPipeline->RT_BeginPass(*m_pCurrentView->stage, m_pCurrentView->viewPass);
+	BeginActualRender();
 }
 
 void CRenderDevice::EndOnscreenRender()
 {
-	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
+	EndActualRender();
 }
 
 void CRenderDevice::SetRenderTarget(::Noesis::RenderTarget* surface)
@@ -523,10 +526,12 @@ void CRenderDevice::UpdateViewRenderTargets(ViewRenderData* perViewData, int new
 
 void CRenderDevice::BeginActualRender()
 {
+	m_pPipeline->RT_BeginPass(*m_pCurrentView->stage, m_pCurrentView->viewPass);
 }
 
 void CRenderDevice::EndActualRender()
 {
+	m_pPipeline->RT_EndPass(*m_pCurrentView->stage, true);
 }
 
 void CRenderDevice::RT_CheckAndUpdateViewTarget(ViewRenderData& ViewData)

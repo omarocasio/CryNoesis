@@ -7,6 +7,7 @@
 
 #include <CryEntitySystem/IEntityClass.h>
 #include "Interfaces/INoesisPlugin.h"
+#include "FG_Nodes/FGFontLoader.h"
 
 class CImplementation;
 
@@ -31,6 +32,9 @@ public:
 	// ISystemEventListener
 	virtual void OnSystemEvent(ESystemEvent event, UINT_PTR wparam, UINT_PTR lparam) override;
 	// ~ISystemEventListener
+
+	PLUGIN_FLOWNODE_REGISTER
+	PLUGIN_FLOWNODE_UNREGISTER
 
 	CImplementation* GetImpl();
 

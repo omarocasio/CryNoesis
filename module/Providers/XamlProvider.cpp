@@ -114,3 +114,182 @@ void CXamlProvider::RemoveSearchPath(const char* uri)
 	std::filesystem::path  path = std::filesystem::u8path(uri).make_preferred();
 	m_searchPaths.erase(path);
 }
+
+
+class CFGXamlLoader final : public CFlowBaseNode<eNCT_Instanced>
+{
+public:
+    CFGXamlLoader(SActivationInfo* pActInfo){}
+
+    virtual IFlowNodePtr Clone(SActivationInfo* pActInfo)
+    {
+        return new CFGXamlLoader(pActInfo);
+    };
+
+    virtual void GetConfiguration(SFlowNodeConfig& config)
+    {
+        static const SInputPortConfig in_config[] = {
+            InputPortConfig_Void("Get",        _HELP("Get and Load Xaml")),
+            InputPortConfig<string>("XamlName", _HELP("Input the name of xmal file you wish to load (just name no exension)")),
+        { 0 }
+        };
+        static const SOutputPortConfig out_config[] = {
+            OutputPortConfig<string>("XamlName"),
+        { 0 }
+        };
+        config.sDescription = _HELP("Manual start a Font");
+        config.pInputPorts = in_config;
+        config.pOutputPorts = out_config;
+        config.SetCategory(EFLN_APPROVED);
+    }
+
+    virtual void ProcessEvent(EFlowEvent event, SActivationInfo* pActInfo)
+    {
+        switch (event)
+        {
+        case eFE_Activate:
+            if (IsPortActive(pActInfo, 0))
+            {
+                string str1 = GetPortString(pActInfo, 1);
+                if (!str1.empty())
+                {
+                    CryLogAlways("Getting xaml %s", str1);
+					g_pProvider->LoadXaml(str1.c_str());
+                }
+                ActivateOutput(pActInfo, 0, str1);
+            }
+            break;
+        }
+    }
+
+    virtual void GetMemoryUsage(ICrySizer* s) const
+    {
+        s->Add(*this);
+    }
+
+private:
+
+};
+
+REGISTER_FLOW_NODE("CryNoesis:CFGXamlLoader", CFGXamlLoader);
+
+/////////////////// 
+class CFGXamlReloadAll final : public CFlowBaseNode<eNCT_Instanced>
+{
+public:
+    CFGXamlReloadAll(SActivationInfo* pActInfo)
+    {
+
+    }
+
+    virtual IFlowNodePtr Clone(SActivationInfo* pActInfo)
+    {
+        return new CFGXamlReloadAll(pActInfo);
+    };
+
+    virtual void GetConfiguration(SFlowNodeConfig& config)
+    {
+        static const SInputPortConfig in_config[] = {
+            InputPortConfig_Void("Get",        _HELP("Reload Xamls")),
+            InputPortConfig<bool>("Reload All", _HELP("Reload All Xamls")),
+        { 0 }
+        };
+        static const SOutputPortConfig out_config[] = {
+            OutputPortConfig<bool>("Succuss"),
+        { 0 }
+        };
+        config.sDescription = _HELP("Reload all Xamls in data directory");
+        config.pInputPorts = in_config;
+        config.pOutputPorts = out_config;
+        config.SetCategory(EFLN_APPROVED);
+    }
+
+    virtual void ProcessEvent(EFlowEvent event, SActivationInfo* pActInfo)
+    {
+        switch (event)
+        {
+        case eFE_Activate:
+            if (IsPortActive(pActInfo, 0))
+            {
+                bool activate = GetPortInt(pActInfo, 1);
+
+                if (activate)
+                {
+                    g_pProvider->ReloadAllXaml();
+                }
+
+                ActivateOutput(pActInfo, 1, activate);
+            }
+            break;
+        }
+    }
+
+    virtual void GetMemoryUsage(ICrySizer* s) const
+    {
+        s->Add(*this);
+    }
+
+private:
+
+};
+
+REGISTER_FLOW_NODE("CryNoesis:CFGXamlReloadAll", CFGXamlReloadAll);
+
+////////////
+
+class CFGReloadSpecificXaml final : public CFlowBaseNode<eNCT_Instanced>
+{
+public:
+    CFGReloadSpecificXaml(SActivationInfo* pActInfo) {}
+
+    virtual IFlowNodePtr Clone(SActivationInfo* pActInfo)
+    {
+        return new CFGReloadSpecificXaml(pActInfo);
+    };
+
+    virtual void GetConfiguration(SFlowNodeConfig& config)
+    {
+        static const SInputPortConfig in_config[] = {
+            InputPortConfig_Void("Get",        _HELP("Reload Specific Xaml")),
+            InputPortConfig<string>("String", _HELP("Input the name of xmal file you wish to load (just name no exension)")),
+        { 0 }
+        };
+        static const SOutputPortConfig out_config[] = {
+            OutputPortConfig<string>("XamlName"),
+        { 0 }
+        };
+        config.sDescription = _HELP("Manual start a Font");
+        config.pInputPorts = in_config;
+        config.pOutputPorts = out_config;
+        config.SetCategory(EFLN_APPROVED);
+    }
+
+    virtual void ProcessEvent(EFlowEvent event, SActivationInfo* pActInfo)
+    {
+        switch (event)
+        {
+        case eFE_Activate:
+            if (IsPortActive(pActInfo, 0))
+            {
+                string str1 = GetPortString(pActInfo, 1);
+                if (!str1.empty())
+                {
+                    CryLogAlways("Getting xaml %s", str1);
+                    g_pProvider->LoadXaml(str1.c_str());
+                }
+                ActivateOutput(pActInfo, 0, str1);
+            }
+            break;
+        }
+    }
+
+    virtual void GetMemoryUsage(ICrySizer* s) const
+    {
+        s->Add(*this);
+    }
+
+private:
+
+};
+
+REGISTER_FLOW_NODE("CryNoesis:CFGReloadSpecificXaml", CFGReloadSpecificXaml);

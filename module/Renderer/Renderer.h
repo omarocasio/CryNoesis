@@ -31,7 +31,7 @@ struct SShaderInfo
 	_smart_ptr<IShader> pShader;
 
 	bool operator ==(const SShaderInfo& info) { return info.effectID.v == effectID.v; }
-	bool operator ==(::Noesis::Shader id) { return id.v == effectID.v; }
+	bool operator ==(Noesis::Shader id) { return id.v == effectID.v; }
 };
 
 using TShaderInfoList = std::vector<SShaderInfo>;
@@ -50,29 +50,29 @@ public:
 	void StartRenderer();
 
 	//RenderDevice
-	const ::Noesis::DeviceCaps& GetCaps() const override;
-	Noesis::Ptr<Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
-	Noesis::Ptr<Noesis::RenderTarget> CloneRenderTarget(const char* label, Noesis::RenderTarget* surface) override;
-	Noesis::Ptr<Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
-	void UpdateTexture(Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
+	virtual const ::Noesis::DeviceCaps& GetCaps() const override;
+	virtual Noesis::Ptr<Noesis::RenderTarget> CreateRenderTarget(const char* label, uint32_t width, uint32_t height, uint32_t sampleCount, bool needsStencil) override;
+	virtual Noesis::Ptr<Noesis::RenderTarget> CloneRenderTarget(const char* label, Noesis::RenderTarget* surface) override;
+	virtual Noesis::Ptr<Noesis::Texture> CreateTexture(const char* label, uint32_t width, uint32_t height, uint32_t numLevels, ::Noesis::TextureFormat::Enum format, const void** data) override;
+	virtual void UpdateTexture(Noesis::Texture* texture, uint32_t level, uint32_t x, uint32_t y, uint32_t width, uint32_t height, const void* data) override;
 
-	void BeginOffscreenRender() override;
-	void EndOffscreenRender() override;
+	virtual void BeginOffscreenRender() override;
+	virtual void EndOffscreenRender() override;
 	/// Begins rendering onscreen commands
-	void BeginOnscreenRender() override;
+	virtual void BeginOnscreenRender() override;
 
 	/// Ends rendering onscreen commands
-	void EndOnscreenRender() override;
+	virtual void EndOnscreenRender() override;
 
-	void SetRenderTarget(Noesis::RenderTarget* surface) override;
+	virtual void SetRenderTarget(Noesis::RenderTarget* surface) override;
 
-	void ResolveRenderTarget(Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
+	virtual void ResolveRenderTarget(Noesis::RenderTarget* surface, const ::Noesis::Tile* tiles, uint32_t numTiles) override;
 
-	void* MapVertices(uint32_t bytes) override;
-	void UnmapVertices() override;
+	virtual void* MapVertices(uint32_t bytes) override;
+	virtual void UnmapVertices() override;
 
-	void* MapIndices(uint32_t bytes) override;
-	void UnmapIndices() override;
+	virtual void* MapIndices(uint32_t bytes) override;
+	virtual void UnmapIndices() override;
 
 
 	virtual void DrawBatch(const Noesis::Batch& batch) override;

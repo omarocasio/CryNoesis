@@ -14,6 +14,10 @@
 
 #include <NsGui/IntegrationAPI.h>
 
+#include <CryThreading/IThreadConfigManager.h>
+#include <CryThreading/CryThread.h>
+#include <CryThreading/IThreadManager.h>
+
 
 CPlugin::~CPlugin()
 {
