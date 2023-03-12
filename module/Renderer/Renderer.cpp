@@ -61,7 +61,7 @@ static void RegisterSamplers(Cry::Renderer::IStageResourceProvider* pResourcePro
 
 static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProvider)
 {
-	for (int i = 0; i < g_layoutInfoList.size(); ++i)
+	for (int i = 0; i < 30; ++i)
 	{
 		const auto& layoutInfo = g_layoutInfoList[i];
 		auto& shaderInfo = g_shaderInfo[i];
