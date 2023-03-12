@@ -61,9 +61,12 @@ static void RegisterSamplers(Cry::Renderer::IStageResourceProvider* pResourcePro
 
 static void RegisterLayouts(Cry::Renderer::IStageResourceProvider* pResourceProvider)
 {
-	for (int i = 0; i < 30; ++i)
+	for (int i = 0; i < 32; ++i)
 	{
 		const auto& layoutInfo = g_layoutInfoList[i];
+
+		CryLogAlways("Layout info %i", i);
+		CryLogAlways("Layout info mask %i", layoutInfo.mask);
 		auto& shaderInfo = g_shaderInfo[i];
 		shaderInfo.effectID = layoutInfo.shader;
 
@@ -146,7 +149,7 @@ Noesis::Ptr<::Noesis::RenderTarget> CRenderDevice::CreateRenderTarget(const char
 		height,
 		Clr_FarPlane,
 		eTT_2D,
-		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL,
+		FT_NOMIPS | FT_DONT_STREAM | FT_USAGE_DEPTHSTENCIL | FT_USAGE_ALLOWREADSRGB,
 		ETEX_Format::eTF_S8,
 		-1
 	};
@@ -212,12 +215,10 @@ void CRenderDevice::UpdateTexture(Noesis::Texture* texture, uint32_t level, uint
 
 void CRenderDevice::BeginOffscreenRender()
 {
-	BeginActualRender();
 }
 
 void CRenderDevice::EndOffscreenRender()
 {
-	EndActualRender();
 }
 
 void CRenderDevice::BeginOnscreenRender()
@@ -293,7 +294,7 @@ void CRenderDevice::UnmapIndices()
 void CRenderDevice::DrawBatch(const::Noesis::Batch& batch)
 {
 
-	CryLogAlways("Drawing Batch");
+	CryLogAlways("Runing Batch");
 
 	using namespace Cry::Renderer::Pipeline::Pass;
 
@@ -313,13 +314,13 @@ void CRenderDevice::DrawBatch(const::Noesis::Batch& batch)
 	bufferParams.inputByteOffset = batch.vertexOffset;
 	bufferParams.idxSize = batch.numIndices;
 	bufferParams.idxOffset = batch.startIndex;
-	bufferParams.isIDX32 = false;
+	bufferParams.isIDX32 = true;
 
 	StaticDynArray <SMultiVlaueConstantBuffer, 4> buffers;
 
 	StaticDynArray<SBufferValuePtr, 1> matrixBuffers;
 	SBufferValuePtr matrixPtr{
-		(uint8*)batch.vertexOffset,
+		(uint8*)batch.numVertices,
 		16 * sizeof(float)
 	};
 	matrixBuffers.push_back(matrixPtr);
@@ -336,12 +337,12 @@ void CRenderDevice::DrawBatch(const::Noesis::Batch& batch)
 	m_pCurrentView->vertexCBHash = batch.vertexUniforms->hash;
 
 	StaticDynArray<SBufferValuePtr, 3> pixelBuffers;
-	if (batch.shader.RGBA != 0)
+	if (batch.shader.v != 0)
 	{
 		uint32 hash = batch.pixelUniforms->hash;
 		//if (m_pCurrentView->pixelCBHash != hash)
 		{
-			if (batch.shader.RGBA != 0)
+			if (batch.shader.v != 0)
 			{
 				SBufferValuePtr pixelBuffer{
 				(uint8*)batch.shader.RGBA,
@@ -470,18 +471,16 @@ void CRenderDevice::UpdateViewSize(ViewRenderData* perViewData, uint32 width, ui
 
 std::unique_ptr<ViewRenderData> CRenderDevice::InitializeRenderViewData(ViewData& viewData)
 {
-	{
-		auto pViewRenderDataPtr = std::make_unique<ViewRenderData>();
+	auto pViewRenderDataPtr = std::make_unique<ViewRenderData>();
 
-		auto pRenderData = pViewRenderDataPtr.get();
-		auto pViewData = &viewData;
+	auto pRenderData = pViewRenderDataPtr.get();
+	auto pViewData = &viewData;
 
-		m_pPipeline->ExecuteRenderThreadCommand([=]() {
-			RT_InitializeViewRenderer(*pRenderData, *pViewData);
-			});
+	m_pPipeline->ExecuteRenderThreadCommand([=]() {
+		RT_InitializeViewRenderer(*pRenderData, *pViewData);
+		});
 
-		return std::move(pViewRenderDataPtr);
-	}
+	return std::move(pViewRenderDataPtr);
 }
 
 void CRenderDevice::DestroyView(TRenderViewDataPtr pRenderData, Noesis::Ptr<::Noesis::IView> pView)
@@ -601,6 +600,10 @@ void CRenderDevice::RT_InitializeViewRenderer(ViewRenderData& viewRenderData, Vi
 
 	pRenderer->Init(this);
 	viewRenderData.pNsRenderer = pRenderer;
+
+	auto pView = &viewRenderData;
+	Cry::Renderer::Pipeline::StageRenderArguments arg;
+	RT_RenderView(pView, arg);
 }
 
 void CRenderDevice::RT_DestroyView(ViewRenderData* pRenderViewData)

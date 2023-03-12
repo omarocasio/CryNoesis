@@ -98,13 +98,13 @@ Mask = 0x4000
 
 Property
 {
-Name = %_EFFECT_UPSACLE
+Name = %_EFFECT_UPSAMPLE
 Mask = 0x8000
 }
 
 Property
 {
-Name = %_EFFECT_DOWNSCALE
+Name = %_EFFECT_DOWNSAMPLE
 Mask = 0x10000
 }
 

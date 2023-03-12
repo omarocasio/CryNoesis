@@ -261,50 +261,36 @@ namespace LayoutDefinitions
 		MakeInfo<Shader::Path_Radial, In::Pos, In::Tex0>(),
 		MakeInfo<Shader::Path_Pattern, In::Pos, In::Tex0>(),
 		MakeInfo<Shader::Path_Pattern_Clamp, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_Repeat, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_MirrorU, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_MirrorV, In::Pos, In::Tex0>(),
+		MakeInfo<Shader::Path_Pattern_Repeat, In::Pos, In::Tile>(),
+		MakeInfo<Shader::Path_Pattern_MirrorU, In::Pos, In::Tile>(),
+		MakeInfo<Shader::Path_Pattern_MirrorV, In::Pos, In::Tile>(),
 
-		MakeInfo<Shader::Path_AA_Solid, In::Pos, In::Color, In::Coverage>(),
-		MakeInfo<Shader::Path_AA_Linear, In::Pos, In::Tex0, In::Coverage>(),
-		MakeInfo<Shader::Path_AA_Radial, In::Pos, In::Tex0, In::Coverage>(),
-		MakeInfo<Shader::Path_AA_Pattern, In::Pos, In::Tex0, In::Coverage>(),
+		MakeInfo<Shader::Path_AA_Solid, In::Color, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Linear, In::Color, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Radial, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Pattern, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Pattern_Clamp, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Pattern_Repeat, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::Path_AA_Pattern_MirrorU, In::Pos, In::Tex0, In::Tile>(),
+		MakeInfo<Shader::Path_AA_Pattern_MirrorV, In::Pos, In::Tex0, In::Tile>(),
+		MakeInfo<Shader::Path_AA_Pattern_Mirror, In::Pos, In::Tex0, In::Tile>(),
 
-		MakeInfo<Shader::SDF_Solid, In::Pos, In::Color, In::Tex1>(),
-		MakeInfo<Shader::SDF_Linear, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_Radial, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_Pattern, In::Pos, In::Tex0, In::Tex1>(),
+		MakeInfo<Shader::SDF_Solid, In::Pos, In::Color, In::Tex0>(),
+		MakeInfo<Shader::SDF_Linear, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::SDF_Radial, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::SDF_Pattern, In::Pos, In::Tex0, In::Tex0>(),
 
-		MakeInfo<Shader::SDF_LCD_Solid, In::Pos, In::Color, In::Tex1>(),
-		MakeInfo<Shader::SDF_LCD_Linear, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_LCD_Radial, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_LCD_Pattern, In::Pos, In::Tex0, In::Tex1>(),
+		MakeInfo<Shader::SDF_LCD_Solid, In::Pos, In::Color, In::Tex0>(),
+		MakeInfo<Shader::SDF_LCD_Linear, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::SDF_LCD_Radial, In::Pos, In::Tex0, In::Tex0>(),
+		MakeInfo<Shader::SDF_LCD_Pattern, In::Pos, In::Tex0, In::Tex0>(),
 
-		MakeInfo<Shader::Opacity_Solid, In::Pos, In::Color, In::Tex1>(),
+		MakeInfo<Shader::Opacity_Solid, In::Pos, In::Color, In::Tex0>(),
 		MakeInfo<Shader::Opacity_Linear, In::Pos, In::Tex0, In::Tex1>(),
 		MakeInfo<Shader::Opacity_Radial, In::Pos, In::Tex0, In::Tex1>(),
 		MakeInfo<Shader::Opacity_Pattern, In::Pos, In::Tex0, In::Tex1>(),
 
-		MakeInfo<Shader::Upsample, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Downsample, In::Pos, In::Tex0>(),
-
-		MakeInfo<Shader::Shadow, In::Pos, In::Color, In::Tex1, In::Tex1>(),
-		MakeInfo<Shader::Blur, In::Pos, In::Color, In::Tex1, In::Tex1>()
+		MakeInfo<Shader::Upsample, In::Pos, In::Tex0, In::Tex1>(),
+		MakeInfo<Shader::Downsample, In::Pos, In::Tex0, In::Tex1>()
 	};
 }
-
-/*
-		MakeInfo<Shader::Path_Solid, In::Pos, In::Color>(),
-		MakeInfo<Shader::Path_Linear, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Radial, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_Clamp, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_Repeat, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_MirrorU, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_MirrorV, In::Pos, In::Tex0>(),
-		MakeInfo<Shader::Path_Pattern_Mirror, In::Pos, In::Tex0>(),
-
-		MakeInfo<Shader::SDF_Solid, In::Pos, In::Color, In::Tex1>(),
-		MakeInfo<Shader::SDF_Linear, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_Radial, In::Pos, In::Tex0, In::Tex1>(),
-		MakeInfo<Shader::SDF_Pattern, In::Pos, In::Tex0, In::Tex1>(),*/

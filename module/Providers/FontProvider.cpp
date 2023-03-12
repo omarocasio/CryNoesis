@@ -3,15 +3,13 @@
 #include "FontProvider.h"
 #include "FileProvider.h"
 #include <NsCore/Ptr.h>
-
+#include <CrySystem/File/ICryPak.h>
 #include <CryFlowGraph/IFlowBaseNode.h>
 
 
 
 void CFontProvider::ScanFolder(const Noesis::Uri& folder)
 {
-	CryLogAlways("%s", folder.Str());
-
 	ScanFolder(folder, "otf");
 	ScanFolder(folder, "ttf");
 	ScanFolder(folder, "ttc");
@@ -20,24 +18,26 @@ void CFontProvider::ScanFolder(const Noesis::Uri& folder)
 Noesis::Ptr<Noesis::Stream> CFontProvider::OpenFont(const Noesis::Uri& folder, const char* filename) const
 {
 	stack_string path;
-	const char* rootPath = "."; //Make cvar
-	path.Format("%s/%s/%s", rootPath, folder, filename);
-
-	return CPakStream::Open(path);
+	//const char* rootPath = "."; //Make cvar
+	path.Format("%s/%s", folder.Str(), filename);
+	return CPakStream::Open(path.c_str());
 }
 
 void CFontProvider::ScanFolder(const Noesis::Uri& folder, const char* ext)
 {
 	stack_string path;
-	const char* rootPath = "."; //Make cvar
-	path.Format("%s/%s/*.%s/", rootPath, folder.Str(), ext);
+	//const char* rootPath = "."; //Make cvar
+	path.Format("%s/*.%s/",folder.Str(), ext);
+
+    gEnv->pLog->Log("Scaning : %s", path.c_str());
 
 	_finddata_t findData;
-	auto handle = gEnv->pCryPak->FindFirst(path.c_str(), &findData);
+	auto handle = gEnv->pCryPak->FindFirst(path.c_str(),&findData);
 	if (handle != -1)
 	{
 		do
 		{
+            CryLogAlways("Registering Font: ", findData.name);
 			RegisterFont(folder, findData.name);
 
 		} while (gEnv->pCryPak->FindNext(handle, &findData) != -1);

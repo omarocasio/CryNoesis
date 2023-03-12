@@ -33,7 +33,7 @@ bool CTextureWrapper::IsInverted() const
 
 bool CTextureWrapper::HasAlpha() const
 {
-    return false;
+    return true;
 }
 
 CRenderTarget::CRenderTarget(ITexture* pColor, ITexture* pDepth)

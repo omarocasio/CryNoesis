@@ -98,11 +98,11 @@ constexpr uint32 CreateDepthMaskZero()
 
 inline constexpr uint32 gDepthStateMasks[5]
 {
-	GS_NODEPTHTEST,
-	GS_NODEPTHTEST | GS_STENCIL,
-	GS_NODEPTHTEST | GS_STENCIL,
-	GS_NODEPTHTEST | GS_STENCIL,
-	GS_NODEPTHTEST | GS_STENCIL
+	GS_NODEPTHTEST | GS_DEPTHFUNC_NEVER,
+	GS_NODEPTHTEST | GS_DEPTHFUNC_NEVER | GS_STENCIL,
+	GS_NODEPTHTEST | GS_DEPTHFUNC_NEVER | GS_STENCIL,
+	GS_NODEPTHTEST | GS_DEPTHFUNC_NEVER | GS_STENCIL,
+	GS_NODEPTHTEST | GS_DEPTHFUNC_NEVER | GS_STENCIL
 };
 
 inline constexpr uint32 gDepthStencilMasks[5]
@@ -117,7 +117,7 @@ inline constexpr uint32 gDepthStencilMasks[5]
 
 inline constexpr uint32 gBlendStateSrc = GS_NOCOLMASK_NONE;
 inline constexpr uint32 gBlendStateSrcOver = GS_NOCOLMASK_NONE | GS_BLSRC_ONE | GS_BLDST_ONEMINUSSRCALPHA;
-inline constexpr uint32 gBlendStateSrcOverDual = GS_NOCOLMASK_NONE | GS_BLSRC_ONE | GS_BLDST_ONEMINUSSRCALPHA;
+inline constexpr uint32 gBlendStateSrcOverDual = GS_NOCOLMASK_NONE | GS_BLSRC_ONE | GS_BLDST_ONEMINUSSRCALPHA | GS_BLDST_ONEMINUSSRC1COLOR_A;
 inline constexpr uint32 gBlendColDisabled = GS_NOCOLMASK_RGBA;
 
 

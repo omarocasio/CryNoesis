@@ -90,10 +90,10 @@ VsOut NoesisVS(in VsIn i)
 {
 	VsOut o;
     
-    o.position = mul(projectionMtx, float4(i.position.xy, 0, 1));
+    o.position = mul(projectionMtx, float4(i.position, 0, 1));
 
 #if %_HAS_COLOR
-    o.color = i.color;
+    o.color = i.color.bgra;
 #endif
 
 #if %_DOWNSAMPLE
@@ -157,14 +157,12 @@ float4 NoesisQuad(in uint id: SV_VertexID): SV_Position
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#if %_EFFECT_SDF || %_EFFECT_SDF_LCD
-    #define SDF_SCALE 7.96875
-    #define SDF_BIAS 0.50196078431
-    #define SDF_AA_FACTOR 0.65
-    #define SDF_BASE_MIN 0.125
-    #define SDF_BASE_MAX 0.25
-    #define SDF_BASE_DEV -0.65
-#endif
+#define SDF_SCALE 7.96875
+#define SDF_BIAS 0.50196078431
+#define SDF_AA_FACTOR 0.65
+#define SDF_BASE_MIN 0.125
+#define SDF_BASE_MAX 0.25
+#define SDF_BASE_DEV -0.65
 
 Texture2D patternTex: register(t0);
 SamplerState patternSampler: register(s0)
@@ -238,18 +236,40 @@ PixelOut NoesisPS(in VsOut i)
         half opacity_ = 1.0f;
 
     #elif %_PAINT_LINEAR
-        half4 paint = ramps.Sample(rampsSampler, i.uv0);
+        half4 paint = rampsTex.Sample(rampsSampler, i.uv0);
         half opacity_ = opacity;
 
     #elif %_PAINT_RADIAL
         half dd = radialGrad[1].y * i.uv0.x - radialGrad[1].z * i.uv0.y;
         half u = radialGrad[0].x * i.uv0.x + radialGrad[0].y * i.uv0.y + radialGrad[0].z *
-            sqrt(radialGrad[0].w * i.uv0.x * i.uv0.x + radialGrad[1].x * i.uv0.y * i.uv0.y - dd * dd);
-        half4 paint = ramps.Sample(rampsSampler, half2(u, radialGrad[1].w));
-        half opacity_ = opacity;
+            sqrt(i.uv0.x * i.uv0.x + i.uv0.y * i.uv0.y - dd * dd);
+        half4 paint = rampsTex.Sample(rampsSampler, half2(u, radialGrad[1].w));
+        half opacity_ = radialGrad[0].w;
 
     #elif %_PAINT_PATTERN
-        half4 paint = pattern.Sample(patternSampler, i.uv0);
+        #if %_PAINT_PATTERN_CLAMP
+        #elif %_PAINT_PATTERN_REPEAT || %_PAINT_PATTERN_MIRRORU || %_PAINT_PATTERN_MIRRORV || %_PAINT_PATTERN_MIRROR
+            float2 uv = (i.uv0 - i.tile.xy) / i.tile.zw;
+            #if %_PAINT_PATTERN_REPEAT
+                uv = frac(uv);
+            #elif %_PAINT_PATTERN_MIRRORU
+                uv.x = abs(uv.x - 2.0 * floor((uv.x - 1.0) / 2.0) - 2.0);
+                uv.y = frac(uv.y);
+            #elif %_PAINT_PATTERN_MIRRORV
+                uv.x = frac(uv.x);
+                uv.y = abs(uv.y - 2.0 * floor((uv.y - 1.0) / 2.0) - 2.0);
+            #else
+                uv = abs(uv - 2.0 * floor((uv - 1.0) / 2.0) - 2.0);
+            #endif
+            uv = uv * i.tile.zw + i.tile.xy;
+            float inside = all(uv == clamp(uv, i.rect.xy, i.rect.zw));
+            half4 paint = inside * patternTex.Sample(patternSampler, uv, ddx(i.uv0), ddy(i.uv0));
+        #else
+            half4 paint = patternTex.Sample(patternSampler, i.uv0);
+        #endif
+        #if %_PATTERN_SRGB
+            paint.xyz = LinearToSrgb(paint.xyz);
+        #endif
         half opacity_ = opacity;
     #endif
 
@@ -263,86 +283,26 @@ PixelOut NoesisPS(in VsOut i)
         o.color = rgba;
 
     #elif %_EFFECT_MASK
-        o.color = half4(1, 1, 1, 1);
+        o.color = half4(1.0f, 1.0f, 1.0f, 1.0f);
 
     #elif %_EFFECT_PATH
-        o.color = paint * opacity_;
+        o.color = opacity_ * paint;
 
     #elif %_EFFECT_PATH_AA
         o.color = (opacity_ * i.coverage) * paint;
 
     #elif %_EFFECT_IMAGE_OPACITY
-        o.color = image.Sample(imageSampler, i.uv1) * (opacity_ * paint.a);
+        o.color = imageTex.Sample(imageSampler, i.uv1) * (opacity_ * paint.a);
 
-    #elif %_EFFECT_IMAGE_SHADOW_V
-        half alpha = 0;
-        half2 dir = half2(0, blurSize * textureSize.w);
-    
-        for (int x = 0; x < GAUSSIAN_NUM_SAMPLES; x++)
-        {
-            half2 uvOffset = offsets[x] * dir;
-            alpha += weights[x] * 
-            (
-                image.Sample(imageSampler, clamp(i.uv1 + uvOffset, i.uv2.xy, i.uv2.zw)).a + 
-                image.Sample(imageSampler, clamp(i.uv1 - uvOffset, i.uv2.xy, i.uv2.zw)).a
-            );
-        }
-
-        o.color = half4(0, 0, 0, alpha);
-
-    #elif %_EFFECT_IMAGE_SHADOW_H
-        half alpha = 0;
-        half2 dir = half2(blurSize * textureSize.z, 0);
-        half2 offset = half2(shadowOffset.x * textureSize.z, shadowOffset.y * textureSize.w);
-
-        for (int x = 0; x < GAUSSIAN_NUM_SAMPLES; x++)
-        {
-            half2 uvOffset = offsets[x] * dir;
-            alpha += weights[x] * 
-            (
-                shadow.Sample(shadowSampler, clamp(i.uv1 - offset + uvOffset, i.uv2.xy, i.uv2.zw)).a +
-                shadow.Sample(shadowSampler, clamp(i.uv1 - offset - uvOffset, i.uv2.xy, i.uv2.zw)).a
-            );
-        }
-
-        half4 img = image.Sample(imageSampler, clamp(i.uv1, i.uv2.xy, i.uv2.zw));
-        o.color = (img + (1.0f - img.a) * (shadowColor * alpha)) * (opacity_ * paint.a);
-
-    #elif %_EFFECT_IMAGE_BLUR_V
-        half4 color = half4(0, 0, 0, 0);
-        half2 dir = half2(0, blurSize * textureSize.w);
-    
-        for (int x = 0; x < GAUSSIAN_NUM_SAMPLES; x++)
-        {
-            half2 uvOffset = offsets[x] * dir;
-            color += weights[x] * 
-            (
-                image.Sample(imageSampler, clamp(i.uv1 + uvOffset, i.uv2.xy, i.uv2.zw)) + 
-                image.Sample(imageSampler, clamp(i.uv1 - uvOffset, i.uv2.xy, i.uv2.zw))
-            );
-        }
-
-        o.color = color;
-
-    #elif %_EFFECT_IMAGE_BLUR_H
-        half4 color = half4(0, 0, 0, 0);
-        half2 dir = half2(blurSize * textureSize.z, 0);
-    
-        for (int x = 0; x < GAUSSIAN_NUM_SAMPLES; x++)
-        {
-            half2 uvOffset = offsets[x] * dir;
-            color += weights[x] * 
-            (
-                shadow.Sample(shadowSampler, clamp(i.uv1 + uvOffset, i.uv2.xy, i.uv2.zw)) +
-                shadow.Sample(shadowSampler, clamp(i.uv1 - uvOffset, i.uv2.xy, i.uv2.zw))
-            );
-        }
-
-        o.color = color * (opacity_ * paint.a);
-
-
+    #elif %_EFFECT_SHADOW
+        half2 uv = clamp(i.uv1 - shadowOffset, i.rect.xy, i.rect.zw);
+        half alpha = lerp(imageTex.Sample(imageSampler, uv).a, shadowTex.Sample(shadowSampler, uv).a, blend);
+        half4 img = imageTex.Sample(imageSampler, clamp(i.uv1, i.rect.xy, i.rect.zw));
+        o.color = (img + (1.0 - img.a) * (shadowColor * alpha)) * paint.a;
+    #elif %_EFFECT_BLUR
+        o.color = lerp(imageTex.Sample(imageSampler, i.uv1), shadowTex.Sample(shadowSampler, i.uv1), blend) * paint.a;
     #elif %_EFFECT_SDF
-        half4 color = glyphs.Sample(glyphsSampler, i.uv1);
+        half4 color = glyphsTex.Sample(glyphsSampler, i.uv1);
         half distance = SDF_SCALE * (color.r - SDF_BIAS);
 
         #if 1
@@ -372,9 +332,9 @@ PixelOut NoesisPS(in VsOut i)
         half2 grad = ddx(i.st1);
         half2 offset = grad * textureSize.zw * (1.0 / 3.0);
 
-        half4 red = glyphs.Sample(glyphsSampler, i.uv1 - offset);
-        half4 green = glyphs.Sample(glyphsSampler, i.uv1);
-        half4 blue = glyphs.Sample(glyphsSampler, i.uv1 + offset);
+        half4 red = glyphsTex.Sample(glyphsSampler, i.uv1 - offset);
+        half4 green = glyphsTex.Sample(glyphsSampler, i.uv1);
+        half4 blue = glyphsTex.Sample(glyphsSampler, i.uv1 + offset);
         half3 distance = SDF_SCALE * (half3(red.r, green.r, blue.r) - SDF_BIAS);
 
         half gradLen = (half)length(grad);
@@ -385,7 +345,16 @@ PixelOut NoesisPS(in VsOut i)
 
         o.color = half4(opacity_ * paint.rgb * alpha.rgb, alpha.g);
         o.alpha = half4((opacity_ * paint.a) * alpha.rgb, alpha.g);
-
+    #elif %_EFFECT_DOWNSAMPLE
+        o.color = 
+        (
+            patternTex.Sample(patternSampler, i.uv0) +
+            patternTex.Sample(patternSampler, i.uv1) +
+            patternTex.Sample(patternSampler, i.uv2) +
+            patternTex.Sample(patternSampler, i.uv3)
+        ) * 0.25;
+    #elif EFFECT_UPSAMPLE
+        o.color = lerp(imageTex.Sample(imageSampler, i.uv1), patternTex.Sample(patternSampler, i.uv0), paint.a);
     #endif
 
     return o;
