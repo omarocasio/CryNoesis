@@ -53,18 +53,6 @@ add_sources("Core_uber.cpp"
 		"Core/InputHandler.h"
 		"Core/ViewManager.h"
 )
-add_sources("FG_Nodes_uber.cpp"
-    PROJECTS CryNoesis
-    SOURCE_GROUP "FG_Nodes"
-		"FG_Nodes/FGFontLoader.cpp"
-		"FG_Nodes/FGTextureLoad.cpp"
-		"FG_Nodes/FGViewDisplay.cpp"
-		"FG_Nodes/FGXamlLoader.cpp"
-		"FG_Nodes/FGFontLoader.h"
-		"FG_Nodes/FGTextureLoad.h"
-		"FG_Nodes/FGViewDisplay.h"
-		"FG_Nodes/FGXamlLoader.h"
-)
 add_sources("Interfaces_uber.cpp"
     PROJECTS CryNoesis
     SOURCE_GROUP "Interfaces"
