@@ -19,6 +19,28 @@ You two ways to use this plugin
 1. you can just drop in the CryNoesis.dll into your Project's bin folder make sure to all add Noesis.dll into your 
 custom Cryengine root bin folder also i.e `[Cryengine_Root]/bin/win_x64` afterwards make sure to add `StageApiRework` files into your Custom Cryengine, files will go into `[Cryengine_root]Code/CryEngine/CryCommon/CryRenderer/` and `[Cryengine_root]Code/CryEngine/RenderDLL/Common/` Respectfully.
 
+# Side-Note 
+If you are adding the `StageApiRework` and when you rebuild Cryengine solution if you IF YOU DO NOT SEE IT go to `[Cryengine_Root]/Code/CryEngine/RenderDLL/XRenderD3D9` and look open the CMakelist.txt, goto `line 679` where you'll see 
+```
+add_sources("CryRenderer_uber_4.cpp"
+	PROJECTS CryRenderGNM, CryRenderD3D11 CryRenderD3D12 CryRenderVulkan
+	... 
+)
+```
+That is where you want to add this right below `PROJECTS CryRenderGNM, CryRenderD3D11 CryRenderD3D12 CryRenderVulkan`
+
+```
+SOURCE_GROUP "Common\\\\Pipeline"
+		"../Common/Pipeline/CustomPipeline.cpp"
+		"../Common/Pipeline/CustomPipeline.h"
+		"../Common/Pipeline/PassRenderer.cpp"
+		"../Common/Pipeline/PassRenderer.h"
+		"../Common/Pipeline/StageResourceProvider.cpp"
+		"../Common/Pipeline/StageResourceProvider.h"
+
+```
+
+
 Once done Rebuild your Custom Cryengine and then Run your game.
 
 # Step two is if you want to Rebuild the plugin #
