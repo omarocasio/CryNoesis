@@ -3,36 +3,47 @@ Property
 Name = %_HAS_POSITION
 Mask = 0x1
 }
+
 Property
 {
 Name = %_HAS_COLOR
 Mask = 0x2
 }
+
 Property
 {
 Name = %_HAS_UV0
 Mask = 0x4
 }
+
 Property
 {
 Name = %_HAS_UV1
 Mask = 0x8
 }
-Property
-{
-Name = %_HAS_UV2
-Mask = 0x10
-}
+
 Property
 {
 Name = %_HAS_COVERAGE
+Mask = 0x10
+}
+
+Property
+{
+Name = %_HAS_RECT
 Mask = 0x20
 }
 
 Property
 {
-Name = %_GEN_ST1
+Name = %_HAS_TILE
 Mask = 0x40
+}
+
+Property
+{
+Name = %_HAS_IMAGE_POSITION
+Mask = 0x70
 }
 
 Property
@@ -40,9 +51,16 @@ Property
 Name = %_EFFECT_RGBA
 Mask = 0x80
 }
+
 Property
 {
 Name = %_EFFECT_MASK
+Mask = 0x90
+}
+
+Property
+{
+Name = %_EFFECT_BLUR
 Mask = 0x100
 }
 Property
@@ -66,34 +84,33 @@ Name = %_EFFECT_SDF_LCD
 Mask = 0x1000
 }
 
-
 Property
 {
-Name = %_EFFECT_IMAGE_OPACITY
+Name = %_EFFECT_OPACITY
 Mask = 0x2000
 }
 
 Property
 {
-Name = %_EFFECT_IMAGE_SHADOW_V
+Name = %_EFFECT_SHADOW
 Mask = 0x4000
 }
 
 Property
 {
-Name = %_EFFECT_IMAGE_SHADOW_H
+Name = %_EFFECT_UPSACLE
 Mask = 0x8000
 }
 
 Property
 {
-Name = %_EFFECT_IMAGE_BLUR_V
+Name = %_EFFECT_DOWNSCALE
 Mask = 0x10000
 }
 
 Property
 {
-Name = %_EFFECT_IMAGE_BLUR_H
+Name = %_EFFECT_CLEAR
 Mask = 0x20000
 }
 
@@ -123,20 +140,33 @@ Name = %_PAINT_PATTERN
 Mask = 0x200000
 }
 
+Property
+{
+Name = %_PAINT_PATTERN_CLAMP
+Mask = 0x300000
+}
 
 Property
 {
-Name = %_GAUSSIAN_35_TAP
+Name = %_PAINT_PATTERN_REPEAT
 Mask = 0x400000
 }
 
 Property
 {
-Name = %_GAUSSIAN_63_TAP
-Mask = 0x800000
+Name = %_PAINT_PATTERN_MIRROR
+Mask = 0x500000
 }
+
 Property
 {
-Name = %_GAUSSIAN_127_TAP
-Mask = 0x1000000
+Name = %_PAINT_PATTERN_MIRRORU
+Mask = 0x600000
 }
+
+Property
+{
+Name = %_PAINT_PATTERN_MIRRORV
+Mask = 0x600000
+}
+
