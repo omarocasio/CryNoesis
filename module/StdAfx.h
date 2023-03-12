@@ -17,8 +17,9 @@
 #include <CrySystem/Profilers/ICryProfilingSystem.h>
 #pragma  pop
 
-#include <NsApp/InteractivityApi.h>
-#include <NsApp/MediaElementApi.h>
+//#include <NsApp/InteractivityApi.h>
+//#include <NsApp/MediaElementApi.h>
+
 
 #include <NoesisPCH.h>
 

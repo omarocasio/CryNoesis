@@ -7,7 +7,6 @@
 
 #include <CryEntitySystem/IEntityClass.h>
 #include "Interfaces/INoesisPlugin.h"
-#include "FG_Nodes/FGFontLoader.h"
 
 class CImplementation;
 
